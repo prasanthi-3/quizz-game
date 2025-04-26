@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QuizQuest India - Test Your Knowledge!</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
+      }
+      body {
+        background: linear-gradient(135deg, #74ebd5, #acb6e5);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+      }
+      .quiz-container {
+        background: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
+        padding: 30px;
+        width: 100%;
+        max-width: 400px;
+        text-align: center;
+        animation: fadeIn 1s ease;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .quiz-header h1 {
+        font-size: 2rem;
+        margin-bottom: 10px;
+        color: #333;
+      }
+      .quiz-header p {
+        color: #666;
+        margin-bottom: 20px;
+      }
+      .question {
+        font-weight: 600;
+        margin-bottom: 10px;
+        font-size: 1.2rem;
+        color: #333;
+      }
+      .options button {
+        display: block;
+        background: #f1f1f1;
+        border: none;
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 12px;
+        width: 100%;
+        font-size: 1rem;
+        transition: 0.3s;
+        cursor: pointer;
+      }
+      .options button:hover {
+        background: #d1e7dd;
+      }
+      .next-btn,
+      .category-btn {
+        margin-top: 20px;
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 30px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+      .next-btn:hover,
+      .category-btn:hover {
+        background: #0056b3;
+      }
+      .score-section {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        animation: fadeIn 1s ease;
+      }
+      .score-section h2 {
+        color: #333;
+        margin-bottom: 20px;
+      }
+      #timer {
+        font-size: 1.2rem;
+        margin-bottom: 10px;
+        color: #ff4d4d;
+      }
+      #progress {
+        margin-bottom: 10px;
+        color: #555;
+      }
+      #category-selection {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      #name-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      input[type="text"] {
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        margin-top: 10px;
+        font-size: 1rem;
+        width: 80%;
+      }
+      #progress-bar {
+        width: 100%;
+        height: 10px;
+        background: #f1f1f1;
+        margin: 10px 0;
+        border-radius: 5px;
+      }
+      #progress-bar-fill {
+        height: 100%;
+        background: #007bff;
+        width: 0%;
+        border-radius: 5px;
+      }
+      @media (max-width: 480px) {
+        .quiz-container {
+          padding: 20px;
+        }
+        .quiz-header h1 {
+          font-size: 1.5rem;
+        }
+        .question {
+          font-size: 1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="quiz-container">
+      <!-- Name Input Screen -->
+      <div id="name-section">
+        <h1>Welcome to QuizQuest India!</h1>
+        <input type="text" id="name" placeholder="Enter your name" />
+        <button class="category-btn" onclick="startQuiz()">Start Quiz</button>
+      </div>
+
+      <!-- Category Selection -->
+      <div id="category-selection" style="display: none">
+        <h1>Select Category</h1>
+        <button class="category-btn" onclick="selectCategory('movies')">
+          Movies 🎬
+        </button>
+        <button class="category-btn" onclick="selectCategory('cricket')">
+          Cricket 🏏
+        </button>
+        <button class="category-btn" onclick="selectCategory('football')">
+          Football ⚽
+        </button>
+        <button class="category-btn" onclick="selectCategory('news')">
+          Latest News 🗞️
+        </button>
+        <button class="category-btn" onclick="selectCategory('music')">
+          Music 🎶
+        </button>
+      </div>
+
+      <!-- Quiz Screen -->
+      <div id="quiz" style="display: none">
+        <div id="progress">Question 1/5</div>
+        <div id="timer">20</div>
+        <div id="progress-bar"><div id="progress-bar-fill"></div></div>
+        <div class="question" id="question">Loading question...</div>
+        <div class="options">
+          <button class="option" onclick="selectOption(0)"></button>
+          <button class="option" onclick="selectOption(1)"></button>
+          <button class="option" onclick="selectOption(2)"></button>
+          <button class="option" onclick="selectOption(3)"></button>
+        </div>
+        <button class="next-btn" onclick="nextQuestion()" style="display: none">
+          Next
+        </button>
+      </div>
+
+      <!-- Score Screen -->
+      <div class="score-section" id="score-section">
+        <h2 id="score-text"></h2>
+        <button class="next-btn" onclick="restartQuiz()">Play Again</button>
+      </div>
+    </div>
+
+    <script>
+      const quizData = {
+        movies: [
+          {
+            question: "Who is known as the 'Megastar' of Telugu cinema?",
+            options: [
+              "Nagarjuna",
+              "Chiranjeevi",
+              "Mahesh Babu",
+              "Pawan Kalyan",
+            ],
+            answer: 1,
+          },
+          {
+            question:
+              "Which movie won the Best Film at 2022 SIIMA Awards (Telugu)?",
+            options: ["Pushpa", "RRR", "Akhanda", "Radhe Shyam"],
+            answer: 1,
+          },
+          {
+            question: "Director of 'Baahubali' series?",
+            options: ["Sukumar", "Trivikram", "Rajamouli", "Puri Jagannadh"],
+            answer: 2,
+          },
+          {
+            question: "Which actor played 'Bheem' in RRR?",
+            options: [
+              "NTR Jr.",
+              "Ram Charan",
+              "Allu Arjun",
+              "Vijay Deverakonda",
+            ],
+            answer: 0,
+          },
+          {
+            question: "Samantha starred in which 2021 blockbuster?",
+            options: ["Shaakuntalam", "Jaanu", "Pushpa", "Family Man 2"],
+            answer: 2,
+          },
+        ],
+        cricket: [
+          {
+            question: "Who is called the 'God of Cricket' in India?",
+            options: [
+              "Virat Kohli",
+              "MS Dhoni",
+              "Sachin Tendulkar",
+              "Rohit Sharma",
+            ],
+            answer: 2,
+          },
+          {
+            question: "Which IPL team has won the most titles?",
+            options: ["CSK", "MI", "RCB", "KKR"],
+            answer: 1,
+          },
+          {
+            question: "Who was the captain of India in 2023 Cricket World Cup?",
+            options: [
+              "KL Rahul",
+              "Rohit Sharma",
+              "Hardik Pandya",
+              "Virat Kohli",
+            ],
+            answer: 1,
+          },
+          {
+            question: "Where is Eden Gardens located?",
+            options: ["Mumbai", "Delhi", "Kolkata", "Chennai"],
+            answer: 2,
+          },
+          {
+            question: "Who won Orange Cap in IPL 2022?",
+            options: [
+              "Jos Buttler",
+              "KL Rahul",
+              "Ruturaj Gaikwad",
+              "David Warner",
+            ],
+            answer: 0,
+          },
+        ],
+        football: [
+          {
+            question: "Who won the 2022 FIFA World Cup?",
+            options: ["France", "Argentina", "Brazil", "Germany"],
+            answer: 1,
+          },
+          {
+            question:
+              "Which player has the most goals in the history of the FIFA World Cup?",
+            options: [
+              "Cristiano Ronaldo",
+              "Lionel Messi",
+              "Miroslav Klose",
+              "Ronaldo Nazario",
+            ],
+            answer: 2,
+          },
+          {
+            question: "Which club did Lionel Messi join in 2021?",
+            options: [
+              "Barcelona",
+              "Paris Saint-Germain",
+              "Manchester City",
+              "Juventus",
+            ],
+            answer: 1,
+          },
+          {
+            question: "Which country is the host of the 2026 FIFA World Cup?",
+            options: ["Qatar", "USA", "Canada & Mexico", "Russia"],
+            answer: 2,
+          },
+          {
+            question: "Which footballer is known as 'The Egyptian King'?",
+            options: [
+              "Mohamed Salah",
+              "Riyad Mahrez",
+              "Sadio Mane",
+              "Kylian Mbappé",
+            ],
+            answer: 0,
+          },
+        ],
+        news: [
+          {
+            question: "Current President of India (2025)?",
+            options: [
+              "Droupadi Murmu",
+              "Narendra Modi",
+              "Amit Shah",
+              "Ram Nath Kovind",
+            ],
+            answer: 0,
+          },
+          {
+            question: "Which Indian city hosted G20 Summit 2023?",
+            options: ["Mumbai", "New Delhi", "Hyderabad", "Bangalore"],
+            answer: 1,
+          },
+          {
+            question: "Who won 2024 Lok Sabha elections?",
+            options: ["BJP", "Congress", "AAP", "TMC"],
+            answer: 0,
+          },
+          {
+            question: "New Chief Minister of Telangana?",
+            options: [
+              "K. Chandrashekar Rao",
+              "Ashok Gehlot",
+              "Yogi Adityanath",
+              "Arvind Kejriwal",
+            ],
+            answer: 0,
+          },
+          {
+            question:
+              "Which Bollywood actress recently turned into a producer?",
+            options: [
+              "Alia Bhatt",
+              "Deepika Padukone",
+              "Kareena Kapoor",
+              "Priyanka Chopra",
+            ],
+            answer: 0,
+          },
+        ],
+        music: [
+          {
+            question: "Which music director composed for 'RRR'?",
+            options: [
+              "A. R. Rahman",
+              "M. M. Keeravani",
+              "Anirudh",
+              "Ilaiyaraaja",
+            ],
+            answer: 1,
+          },
+          {
+            question: "Who is the famous playback singer of 'Tum Hi Ho'?",
+            options: [
+              "Arijit Singh",
+              "Mohit Chauhan",
+              "Sonu Nigam",
+              "Atif Aslam",
+            ],
+            answer: 0,
+          },
+          {
+            question: "Which Bollywood movie features the song 'Shallow'?",
+            options: ["Gully Boy", "Aashiqui 2", "Rock On", "Lady Gaga"],
+            answer: 3,
+          },
+          {
+            question: "Which Telugu movie features 'Butta Bomma' song?",
+            options: ["Ala Vaikunthapurramuloo", "Pushpa", "RRR", "Baahubali"],
+            answer: 0,
+          },
+          {
+            question:
+              "Which legendary singer is known as 'Nightingale of India'?",
+            options: [
+              "Lata Mangeshkar",
+              "Kishore Kumar",
+              "Mukesh",
+              "Mohammad Rafi",
+            ],
+            answer: 0,
+          },
+        ],
+      };
+
+      let userName = "";
+      let selectedCategory = "";
+      let currentQuestionIndex = 0;
+      let currentScore = 0;
+      let timer;
+      let timeLeft = 20;
+
+      function startQuiz() {
+        userName = document.getElementById("name").value;
+        if (!userName) {
+          alert("Please enter your name to begin!");
+          return;
+        }
+        document.getElementById("name-section").style.display = "none";
+        document.getElementById("category-selection").style.display = "block";
+      }
+
+      function selectCategory(category) {
+        selectedCategory = category;
+        currentQuestionIndex = 0;
+        currentScore = 0;
+        document.getElementById("category-selection").style.display = "none";
+        document.getElementById("quiz").style.display = "block";
+        startQuestion();
+      }
+
+      function startQuestion() {
+        const questionData = quizData[selectedCategory][currentQuestionIndex];
+        document.getElementById("question").textContent = questionData.question;
+        const options = document.querySelectorAll(".option");
+        questionData.options.forEach((option, index) => {
+          options[index].textContent = option;
+          options[index].disabled = false;
+          options[index].style.backgroundColor = "";
+        });
+
+        timeLeft = 20; // Reset the timer
+        document.getElementById("timer").textContent = timeLeft;
+        document.getElementById("progress-bar-fill").style.width = "0%";
+
+        document.getElementById("progress").textContent = `Question ${
+          currentQuestionIndex + 1
+        }/5`;
+        startTimer();
+      }
+
+      function startTimer() {
+        timer = setInterval(() => {
+          timeLeft--;
+          document.getElementById("timer").textContent = timeLeft;
+          document.getElementById("progress-bar-fill").style.width =
+            100 - (timeLeft / 20) * 100 + "%";
+
+          if (timeLeft <= 0) {
+            clearInterval(timer);
+            nextQuestion();
+          }
+        }, 1000);
+      }
+
+      function selectOption(index) {
+        clearInterval(timer); // Stop the timer when an option is selected
+
+        const options = document.querySelectorAll(".option");
+        const correctAnswer =
+          quizData[selectedCategory][currentQuestionIndex].answer;
+        const selectedOption = options[index];
+
+        if (index === correctAnswer) {
+          currentScore++;
+          selectedOption.style.backgroundColor = "lightgreen";
+        } else {
+          selectedOption.style.backgroundColor = "lightcoral";
+          options[correctAnswer].style.backgroundColor = "lightgreen";
+        }
+
+        options.forEach((option) => (option.disabled = true));
+        document.querySelector(".next-btn").style.display = "block";
+      }
+
+      function nextQuestion() {
+        if (currentQuestionIndex < 4) {
+          currentQuestionIndex++;
+          startQuestion();
+          document.querySelector(".next-btn").style.display = "none";
+        } else {
+          showScore();
+        }
+      }
+
+      function showScore() {
+        document.getElementById("quiz").style.display = "none";
+        const scoreText = `You scored ${currentScore} out of 5!`;
+        document.getElementById("score-text").textContent = scoreText;
+        document.getElementById("score-section").style.display = "flex";
+      }
+
+      function restartQuiz() {
+        currentQuestionIndex = 0;
+        currentScore = 0;
+        document.getElementById("score-section").style.display = "none";
+        document.getElementById("category-selection").style.display = "block";
+      }
+    </script>
+  </body>
+</html>
